@@ -47,7 +47,7 @@ class GodotCpp(ConanFile):
         self.run('scons -C {} platform={} generate_bindings=yes {}'.format(self.name, self.platform, debug_opt))
 
     def package(self):
-        self.copy("gdnative_api_struct.gen.h", dst="include", src=os.path.join(self.name, "godot_headers"))
+        self.copy("*.h", dst="include", src=os.path.join(self.name, "godot_headers"))
         self.copy("*.hpp", dst="include", src=os.path.join(self.name, "include"))
         self.copy("*.a", dst="lib", src=os.path.join(self.name, "bin"), keep_path=False)
         #self.copy("*.lib", dst="lib", keep_path=False)
@@ -56,9 +56,11 @@ class GodotCpp(ConanFile):
         #self.copy("*.so", dst="lib", keep_path=False)
         
     def package_info(self):
-        lib = "libgodot-cpp.{}.{}.{}".format(self.platform, 
-                                            str(self.settings.build_type).lower(),
-                                            self.arch)
+        # TODO: It looks like that if the name already has dots, the linker doesn't add suffix for .a, .so
+        lib = "libgodot-cpp.{}.{}.{}.a".format(self.platform, 
+                                               str(self.settings.build_type).lower(),
+                                               self.arch)
 
         self.cpp_info.libs = [lib]
+        self.cpp_info.includedirs = ["include", "include/core", "include/gen"]
 
