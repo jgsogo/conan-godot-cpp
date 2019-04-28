@@ -20,7 +20,7 @@ sha, timestamp = get_last_commit("GodotNativeTools", "godot-cpp", "master")
 
 class GodotCpp(ConanFile):
     name = "godot-cpp"
-    version = "master-{}".format(timestamp)
+    version = "0.0.0-{}".format(timestamp)  # 'master' branch uses semver 0.0.0-<timestamp> (will allow version ranges)
 
     settings = "os", "arch", "compiler", "build_type"
 
