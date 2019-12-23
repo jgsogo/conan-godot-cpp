@@ -5,30 +5,41 @@ from conans import ConanFile, tools
 import datetime
 import time
 import os
+import shutil
 
 
-def get_last_commit(org, repo, branch):
-    url = "https://api.github.com/repos/{}/{}/commits/{}".format(org, repo, branch)
+def get_timestamp(org, repo, commit):
+    url = "https://api.github.com/repos/{}/{}/commits/{}".format(org, repo, commit)
     r = requests.get(url).json()
     sha = r["sha"]
     date = datetime.datetime.strptime(r["commit"]["author"]["date"], "%Y-%m-%dT%H:%M:%SZ")
     timestamp = int(time.mktime(date.timetuple()))
     return sha, timestamp
 
-sha, timestamp = get_last_commit("GodotNativeTools", "godot-cpp", "master")
+
+commit = "e4ad265339f17042a86227bfb44f9d5d7dee5ba4"
+sha, timestamp = get_timestamp("GodotNativeTools", "godot-cpp", commit)
 
 
 class GodotCpp(ConanFile):
     name = "godot-cpp"
-    version = "0.0.0-{}".format(timestamp)  # 'master' branch uses semver 0.0.0-<timestamp> (will allow version ranges)
+    commit = "e4ad265339f17042a86227bfb44f9d5d7dee5ba4"
+    version = "3.1-{}".format(timestamp)  # 'master' branch uses semver 0.0.0-<timestamp> (will allow version ranges)
 
     settings = "os", "arch", "compiler", "build_type"
 
     def source(self):
-        git = tools.Git(folder=self.name)
-        git.clone("https://github.com/GodotNativeTools/godot-cpp.git")
-        git.checkout(sha)
-        git.run("submodule update --init --recursive")
+        tools.get("https://github.com/GodotNativeTools/godot-cpp/archive/{}.tar.gz".format(commit),
+                  md5="011aaada9b09b35d2c032b120228ec33")
+        shutil.move("{}-{}".format(self.name, commit), self.name)
+
+        # Clone the headers too
+        headers_commit = "98ee82599dfe07e17983ad831f5e9ac41068667f"
+        tools.get("https://github.com/GodotNativeTools/godot_headers/archive/{}.tar.gz".format(headers_commit),
+                  md5="fb6ce42f83dab25e6e26cd780043e846")
+        target_directory = os.path.join(self.name, "godot_headers")
+        shutil.rmtree(target_directory)
+        shutil.move("godot_headers-{}".format(headers_commit), target_directory)
 
     @property
     def platform(self):
